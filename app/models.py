@@ -78,9 +78,9 @@ class AppPackageCategory(db.Model):
     __tablename__ = 'app_package_category'
 
     id = db.Column(db.Integer, primary_key=True)
-    app_name = os_version = db.Column(db.String(100))
-    package_name = os_version = db.Column(db.String(100))
-    package_name = os_version = db.Column(db.String(50))
+    app_name = db.Column(db.String(100))
+    package_name = db.Column(db.String(100))
+    category = db.Column(db.String(50))
 
 
 class RunningApps(db.Model):
