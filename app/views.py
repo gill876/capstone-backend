@@ -10,7 +10,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 from app.forms import LoginForm
-from app.models import User
+from app.models import User, Profile
 
 
 ###
@@ -28,6 +28,31 @@ def about():
     """Render the website's about page."""
     return render_template('about.html')
 
+
+@app.route('/api/signup', methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        # Get the username and password values from the form.
+        response = {'resp': 'Username already used.'}, 403
+
+        username = request.form['username']
+        password = request.form['password']
+        phone_id = request.form['phone_id']
+        gender = request.form['gender']
+        user = User.query.filter_by(username=username).first()
+
+        if user is None:
+            user = User(username, password)
+            profile = Profile(phone_id, gender)
+
+            # Add User and Profile
+            db.session.add(user)
+            db.session.add(profile)
+            db.session.commit()
+
+            response = {'resp': 'Sign up successful.'}, 201
+
+    return response
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -61,7 +86,8 @@ def secure_page():
 # the user ID stored in the session
 @login_manager.user_loader
 def load_user(id):
-    return UserProfile.query.get(int(id))
+    # return UserProfile.query.get(int(id))
+    pass
 
 ###
 # The functions below should be applicable to all Flask apps.
