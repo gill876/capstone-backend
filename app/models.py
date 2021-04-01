@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 
 
 class User(db.Model):
-    __tablename__ = 'user'
+    __tablename__ = 'dd_user'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
@@ -33,7 +33,7 @@ class User(db.Model):
 
 
 class Profile(db.Model):
-    __tablename__ = 'profile'
+    __tablename__ = 'dd_profile'
 
     id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.String(255), unique=True)
@@ -50,7 +50,7 @@ class Profile(db.Model):
 
 
 class Phone(db.Model):
-    __tablename__ = 'phone'
+    __tablename__ = 'dd_phone'
 
     id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.String(255), unique=True)
@@ -67,7 +67,7 @@ class Phone(db.Model):
 class UserPhone(db.Model):
     """Connects User and Phone."""
 
-    __tablename__ = 'user_xphone'
+    __tablename__ = 'dd_user_xphone'
 
     id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.String(255))
@@ -75,7 +75,7 @@ class UserPhone(db.Model):
 
 
 class AppPackageCategory(db.Model):
-    __tablename__ = 'app_package_category'
+    __tablename__ = 'dd_app_package_category'
 
     id = db.Column(db.Integer, primary_key=True)
     app_name = db.Column(db.String(100))
@@ -86,7 +86,7 @@ class AppPackageCategory(db.Model):
 class RunningApps(db.Model):
     """Running Apps from Phone table connecting to App Pkg. Cat.."""
 
-    __tablename__ = "running_apps"
+    __tablename__ = "dd_running_apps"
 
     id = db.Column(db.Integer, primary_key=True)
     running_apps = db.Column(db.Integer)
@@ -95,7 +95,7 @@ class RunningApps(db.Model):
 class AppUsage(db.Model):
     """App Usage for user."""
 
-    __tablename__ = "app_usage"
+    __tablename__ = "dd_app_usage"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
