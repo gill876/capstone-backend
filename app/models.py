@@ -69,6 +69,7 @@ class UserPhone(db.Model):
 
     __tablename__ = 'user_xphone'
 
+    id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.String(255))
     username = db.Column(db.String(80))
 
@@ -86,6 +87,8 @@ class RunningApps(db.Model):
     """Running Apps from Phone table connecting to App Pkg. Cat.."""
 
     __tablename__ = "running_apps"
+
+    id = db.Column(db.Integer, primary_key=True)
     running_apps = db.Column(db.Integer)
     app_pkg_cat = db.Column(db.Integer)
 

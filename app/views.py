@@ -10,7 +10,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 from app.forms import LoginForm
-from app.models import UserProfile
+from app.models import User
 
 
 ###
@@ -38,14 +38,14 @@ def login():
             username = form.username.data
             password = form.password.data
 
-            user = UserProfile.query.filter_by(username=username).first()
+            # user = UserProfile.query.filter_by(username=username).first()
 
-            if user is not None and check_password_hash(user.password, password):
-                login_user(user)
-                flash('Logged in successfully.', 'success')
-                return redirect(url_for('secure_page'))  # they should be redirected to a secure-page route instead
-            else:
-                flash('Username or Password is incorrect.', 'danger')
+            # if user is not None and check_password_hash(user.password, password):
+            #     login_user(user)
+            #     flash('Logged in successfully.', 'success')
+            #     return redirect(url_for('secure_page'))  # they should be redirected to a secure-page route instead
+            # else:
+            #     flash('Username or Password is incorrect.', 'danger')
 
     flash_errors(form)
     return render_template("login.html", form=form)
