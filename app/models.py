@@ -1,5 +1,8 @@
 from . import db
-from werkzeug.security import generate_password_hash
+from app import app
+from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
 
 
 class User(db.Model):
@@ -8,28 +11,28 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(255))
-
-    def __init__(self, username, password):
-        self.username = username
+    
+    def hash_password(self, password):
         self.password = generate_password_hash(password, method='pbkdf2:sha256')
 
-    def is_authenticated(self):
-        return True
+    def verify_password(self, password):
+        return check_password_hash(self.password, password)
 
-    def is_active(self):
-        return True
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
 
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
         try:
-            return unicode(self.id)  # python 2 support
-        except NameError:
-            return str(self.id)  # python 3 support
-
-    def __repr__(self):
-        return '<User %r>' % (self.username)
+            data = s.loads(token)
+        except SignatureExpired:
+            return None    # valid token, but expired
+        except BadSignature:
+            return None    # invalid token
+        user = User.query.get(data['id'])
+        return user
 
 
 class Profile(db.Model):

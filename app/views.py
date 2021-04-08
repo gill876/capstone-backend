@@ -5,10 +5,11 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_user, logout_user, current_user, login_required
-from werkzeug.security import check_password_hash
+from app import app, db, auth
+from flask import (
+    render_template, request, redirect, url_for, flash, jsonify, g,
+    abort
+)
 from app.forms import LoginForm
 from app.models import User, Profile
 
@@ -16,6 +17,25 @@ from app.models import User, Profile
 ###
 # Routing for your application.
 ###
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        # try to authenticate with username/password
+        user = User.query.filter_by(username=username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
+    g.user = user
+    return True
+
+
+@app.route('/api/resource')
+@auth.login_required
+def get_resource():
+    # return render_template('secure_page.html')
+    return jsonify({'data': 'Hello, %s!' % g.user.username})
+
 
 @app.route('/')
 def home():
@@ -35,14 +55,19 @@ def signup():
         # Get the username and password values from the form.
         response = {'resp': 'Username already used.'}, 403
 
-        username = request.form['username']
-        password = request.form['password']
-        phone_id = request.form['phone_id']
-        gender = request.form['gender']
+        username = request.json.get('username')
+        password = request.json.get('password')
+        phone_id = request.json.get('phone_id')
+        gender = request.json.get('gender')
+
+        if username is None or password is None:
+            abort(400)
+
         user = User.query.filter_by(username=username).first()
 
         if user is None:
-            user = User(username, password)
+            user = User(username=username)
+            user.hash_password(password)
             profile = Profile(phone_id, gender)
 
             # Add User and Profile
@@ -50,44 +75,29 @@ def signup():
             db.session.add(profile)
             db.session.commit()
 
-            response = {'resp': 'Sign up successful.'}, 201
+            response = jsonify(
+                {
+                    'user_id': user.id,
+                    'token': user.generate_auth_token(600).decode('ascii')
+                }
+                ), 201, \
+                {'Location': url_for('get_user', id=user.id, _external=True)}
 
     return response
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    form = LoginForm()
+@app.route("/api/users/signin", methods=["GET", "POST"])
+def get_user():
     if request.method == "POST":
-        if form.validate_on_submit():
-            # Get the username and password values from the form.
-            username = form.username.data
-            password = form.password.data
+        username = request.json.get('username')
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            abort(400)
+        return {
+            'user_id': user.id,
+            'token': user.generate_auth_token(600).decode('ascii')
+            }, 200
 
-            # user = UserProfile.query.filter_by(username=username).first()
-
-            # if user is not None and check_password_hash(user.password, password):
-            #     login_user(user)
-            #     flash('Logged in successfully.', 'success')
-            #     return redirect(url_for('secure_page'))  # they should be redirected to a secure-page route instead
-            # else:
-            #     flash('Username or Password is incorrect.', 'danger')
-
-    flash_errors(form)
-    return render_template("login.html", form=form)
-
-
-@app.route('/secure-page')
-@login_required
-def secure_page():
-    return render_template('secure_page.html')
-
-
-# user_loader callback. This callback is used to reload the user object from
-# the user ID stored in the session
-@login_manager.user_loader
-def load_user(id):
-    # return UserProfile.query.get(int(id))
-    pass
+    return {"data": "Authentication failed"}, 404
 
 ###
 # The functions below should be applicable to all Flask apps.
