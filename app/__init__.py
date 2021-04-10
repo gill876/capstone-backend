@@ -10,6 +10,6 @@ app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 
-auth = HTTPBasicAuth()
+auth = HTTPBasicAuth(scheme='Bearer')
 
 from app import views

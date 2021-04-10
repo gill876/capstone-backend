@@ -7,7 +7,7 @@ This file creates your application.
 
 from app import app, db, auth
 from flask import (
-    render_template, request, redirect, url_for, flash, jsonify, g,
+    render_template, request, url_for, flash, jsonify, g,
     abort
 )
 from app.forms import LoginForm
@@ -18,13 +18,30 @@ from app.models import User, Profile
 # Routing for your application.
 ###
 @auth.verify_password
-def verify_password(username_or_token, password):
+def verify_password(username, password):
     # first try to authenticate by token
-    user = User.verify_auth_token(username_or_token)
-    if not user:
-        # try to authenticate with username/password
-        user = User.query.filter_by(username=username_or_token).first()
-        if not user or not user.verify_password(password):
+    auth = request.headers.get('Authorization', None)
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if not auth:
+      return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+
+    parts = auth.split()
+
+    if parts[0].lower() != 'bearer':
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
+    elif len(parts) == 1:
+      return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+    elif len(parts) > 2:
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+
+    token = parts[1]
+
+    user = User.verify_auth_token(token)
+    if user is not None:
+        user = User.query.filter_by(username=username).first()
+        if user is None:
             return False
     g.user = user
     return True
@@ -89,13 +106,17 @@ def signup():
 def get_user():
     if request.method == "POST":
         username = request.json.get('username')
+        password = request.json.get('password')
+
         user = User.query.filter_by(username=username).first()
-        if not user:
+        pass_auth = user.verify_password(password)
+        if user is None:
             abort(400)
-        return {
-            'user_id': user.id,
-            'token': user.generate_auth_token(600).decode('ascii')
-            }, 200
+        elif pass_auth:
+            return {
+                'user_id': user.id,
+                'token': user.generate_auth_token(600).decode('ascii')
+                }, 200
 
     return {"data": "Authentication failed"}, 404
 
