@@ -113,6 +113,16 @@ def get_user():
 
     return {"data": "Authentication failed"}, 404
 
+#remember to delete below endoint. Was only for testing
+@app.route("/api/test", methods=["GET", "POST"])
+def test():
+    print("in server")
+    if request.method == "GET":
+        
+        return {"status": "this api works"}
+
+    return {"data": "Authentication failed"}, 404
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
@@ -133,15 +143,16 @@ def send_text_file(file_name):
     return app.send_static_file(file_dot_text)
 
 
-@app.after_request
-def add_header(response):
-    """
-    Add headers to both force latest IE rendering engine or Chrome Frame,
-    and also to cache the rendered page for 10 minutes.
-    """
-    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
-    response.headers['Cache-Control'] = 'public, max-age=0'
-    return response
+# @app.after_request
+# def add_header(response):
+#     """
+#     Add headers to both force latest IE rendering engine or Chrome Frame,
+#     and also to cache the rendered page for 10 minutes.
+#     """
+#     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+#     response.headers['Cache-Control'] = 'public, max-age=0'
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     return response
 
 
 @app.errorhandler(404)
