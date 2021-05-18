@@ -10,7 +10,9 @@ from flask import (
     request, url_for, flash, jsonify, g,
     abort
 )
-from app.models import User, Profile
+from app.models import User, Profile, AppCategory
+import os
+import csv
 
 
 ###
@@ -122,6 +124,39 @@ def test():
         return {"status": "this api works"}
 
     return {"data": "Authentication failed"}, 404
+
+@app.route('/api/usage', methods=["GET", "POST"])
+def log_usage():
+    if request.method == "POST":
+        pass
+    
+    return "usage"
+
+
+@app.route('/api/load/appcat')
+def app_cat():
+    app_cat_csv = '{}{}app{}static{}csv{}app_cat.csv'.format(
+        os.getcwd(), os.sep, os.sep, os.sep, os.sep
+        )
+
+    if os.path.exists(app_cat_csv):
+        app_cat_ls = []
+        with open(app_cat_csv, 'r', newline='') as _file:
+            dict_reader = csv.DictReader(_file)
+            counter = 0
+            for row in dict_reader:
+                if counter == 0:
+                    pass
+                else:
+                    #app_cat_dict[row['V1']] = row['V3']
+                    app_cat_ls+=[AppCategory(app_name=row['V1'], category=row['V3'])]
+                counter+= 1
+        
+        db.session.add_all(app_cat_ls)
+        db.session.commit()
+        return {'message': 'Saved to db'}
+    else:
+        abort(404)
 
 ###
 # The functions below should be applicable to all Flask apps.

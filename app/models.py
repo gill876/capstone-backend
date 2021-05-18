@@ -85,6 +85,13 @@ class AppPackageCategory(db.Model):
     package_name = db.Column(db.String(100))
     category = db.Column(db.String(50))
 
+class AppCategory(db.Model):
+    __tablename__ = 'dd_app_cat'
+
+    id = db.Column(db.Integer, primary_key=True)
+    app_name = db.Column(db.String(500))
+    category = db.Column(db.String(500))
+
 
 class RunningApps(db.Model):
     """Running Apps from Phone table connecting to App Pkg. Cat.."""
