@@ -14,17 +14,50 @@ from app.models import User, Profile, AppCategory
 import os
 import csv
 
+# Using JWT
+import jwt
+from flask import _request_ctx_stack
+from functools import wraps
+import base64
+
 
 ###
 # Routing for your application.
 ###
-@auth.verify_password
-def verify_password(username, password):
-    # first try to authenticate by token
-    auth = request.headers.get('Authorization', None)
-    username = request.json.get('username')
-    password = request.json.get('password')
+# @auth.verify_password
+# def verify_password(username, password):
+#     # first try to authenticate by token
+#     auth = request.headers.get('Authorization', None)
+#     username = request.json.get('username')
+#     password = request.json.get('password')
 
+#     if not auth:
+#       return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+
+#     parts = auth.split()
+
+#     if parts[0].lower() != 'bearer':
+#       return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
+#     elif len(parts) == 1:
+#       return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+#     elif len(parts) > 2:
+#       return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+
+#     token = parts[1]
+
+#     user = User.verify_auth_token(token)
+#     if user is not None:
+#         user = User.query.filter_by(username=username).first()
+#         if user is None:
+#             return False
+#     g.user = user
+#     return True
+
+
+def requires_auth(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth = request.headers.get('Authorization', None)
     if not auth:
       return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
 
@@ -38,21 +71,26 @@ def verify_password(username, password):
       return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
 
     token = parts[1]
+    try:
+         payload = jwt.decode(token, app.config['SALT'])
 
-    user = User.verify_auth_token(token)
-    if user is not None:
-        user = User.query.filter_by(username=username).first()
-        if user is None:
-            return False
-    g.user = user
-    return True
+    except jwt.ExpiredSignature:
+        return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
+    except jwt.DecodeError:
+        return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
+
+    g.current_user = user = payload
+    return f(*args, **kwargs)
+
+  return decorated
 
 
 @app.route('/api/resource')
-@auth.login_required
+# @auth.login_required
+@requires_auth
 def get_resource():
     # return render_template('secure_page.html')
-    return jsonify({'data': 'Hello, %s!' % g.user.username})
+    return jsonify({'data': 'Hello, %s!' % g.current_user})
 
 
 @app.route('/')
@@ -108,9 +146,17 @@ def get_user():
         if user is None:
             abort(400)
         elif pass_auth:
+            # return {
+            #     'user_id': user.id,
+            #     'token': user.generate_auth_token(600).decode('ascii')
+            #     }, 200
+            payload = {'id': user.id, 'username': user.username}
+            token = jwt.encode(payload, app.config['SALT'], algorithm='HS256').decode('utf-8')
+            g.username = user.username
+            # return jsonify(data={'token': token}, message="Token Generated and User Logged In")
             return {
                 'user_id': user.id,
-                'token': user.generate_auth_token(600).decode('ascii')
+                'token': token
                 }, 200
 
     return {"data": "Authentication failed"}, 404
@@ -125,12 +171,19 @@ def test():
 
     return {"data": "Authentication failed"}, 404
 
-@app.route('/api/usage', methods=["GET", "POST"])
-def log_usage():
-    if request.method == "POST":
-        pass
+# @app.route('/api/usage', methods=["GET", "POST"])
+# @requires_auth
+# def log_usage():
+#     if request.method == "POST":
+#         user_app_usage = request.get_json()
+#         username = g.current_user.get("username", None)
+
+#         if username is not None:
+#             pass
+#         else:
+#             abort(400)
     
-    return "usage"
+#     return username
 
 
 @app.route('/api/load/appcat')
@@ -154,7 +207,7 @@ def app_cat():
         
         db.session.add_all(app_cat_ls)
         db.session.commit()
-        return {'message': 'Saved to db'}
+        return {'data': 'Saved to db'}
     else:
         abort(404)
 

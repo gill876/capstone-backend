@@ -5,6 +5,7 @@ class Config(object):
     DEBUG = False
     #SECRET_KEY = os.environ.get('SECRET_KEY')
     SECRET_KEY = 'secretkey'
+    SALT = 'r?fPfnryZfJ=M*aQxz$h2_F#!X@YR9nEB&f^SU3qRkVTt3WeP528BRYGthRZ7@8hT4Wqh'
     #SQLALCHEMY_DATABASE_URI = os.environ.get('postgresql://dailyd:ch3Mi$try@localhost/daily_delight')
     SQLALCHEMY_DATABASE_URI = 'postgresql://dailyd:ch3Mi$try@localhost/daily_delight'
     CORS_HEADERS = 'Content-Type'
