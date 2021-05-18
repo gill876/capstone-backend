@@ -109,6 +109,6 @@ class AppUsage(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
-    app_pkg_cat = db.Column(db.Integer)
+    category = db.Column(db.String(500))
     time_sec = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime)
