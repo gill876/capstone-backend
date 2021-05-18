@@ -309,13 +309,12 @@ def simple_suggestion():
 
 @app.route('/api/load/appcat')
 def app_cat():
-    app_cat_csv = '{}{}app{}static{}csv{}app_cat.csv'.format(
-        os.getcwd(), os.sep, os.sep, os.sep, os.sep
-        )
+    """app_cat_csv = 'C:\\Users\\Lenovo\\Downloads\\dailydelightandroid\\capstone-backend\\app\\static\\csv\\app_cat.csv' """
+    app_cat_csv = './app/static/csv/app_cat.csv'
 
     if os.path.exists(app_cat_csv):
         app_cat_ls = []
-        with open(app_cat_csv, 'r', newline='') as _file:
+        with open(app_cat_csv, 'r', newline='', encoding="utf8") as _file:
             dict_reader = csv.DictReader(_file)
             counter = 0
             for row in dict_reader:
