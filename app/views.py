@@ -10,9 +10,10 @@ from flask import (
     request, url_for, flash, jsonify, g,
     abort
 )
-from app.models import User, Profile, AppCategory
+from app.models import User, Profile, AppCategory, AppUsage
 import os
 import csv
+import datetime
 
 # Using JWT
 import jwt
@@ -171,19 +172,38 @@ def test():
 
     return {"data": "Authentication failed"}, 404
 
-# @app.route('/api/usage', methods=["GET", "POST"])
-# @requires_auth
-# def log_usage():
-#     if request.method == "POST":
-#         user_app_usage = request.get_json()
-#         username = g.current_user.get("username", None)
+@app.route('/api/usage', methods=["GET", "POST"])
+@requires_auth
+def log_usage():
+    if request.method == "POST":
+        user_app_usage = request.get_json()
+        username = g.current_user.get("username", None)
 
-#         if username is not None:
-#             pass
-#         else:
-#             abort(400)
+        app_usage_obj = []
+        if username is not None:
+            for app_usage in user_app_usage:
+                app_name = app_usage.get("label")
+                time_sec = app_usage.get("usage time")
+
+                app_category = AppCategory.query.filter_by(app_name=app_name).first()
+                category = "Uncategorized"
+                if app_category is not None:
+                    category = app_category.category
+
+                use_ts = app_usage.get("last time used")
+                timestamp = datetime.datetime.fromtimestamp(int(use_ts) / 1000)
+                app_obj = AppUsage(
+                    username=username, category=category, time_sec=time_sec, timestamp=timestamp
+                    )
+                app_usage_obj+=[app_obj]
+
+            db.session.add_all(app_usage_obj)
+            db.session.commit()
+            return {'data': 'Accepted'}, 201
+        else:
+            abort(400)
     
-#     return username
+    return username
 
 
 @app.route('/api/load/appcat')
