@@ -111,3 +111,4 @@ class AppUsage(db.Model):
     username = db.Column(db.String(80))
     app_pkg_cat = db.Column(db.Integer)
     time_sec = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime)
