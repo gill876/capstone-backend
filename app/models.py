@@ -40,6 +40,7 @@ class Profile(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     phone_id = db.Column(db.String(255), unique=True)
+    username = db.Column(db.String(80))
     gender = db.Column(db.Integer)
     extraversion = db.Column(db.Integer)
     agreeableness = db.Column(db.Integer)
@@ -47,9 +48,10 @@ class Profile(db.Model):
     emotional_stability = db.Column(db.Integer)
     intellect_imagination = db.Column(db.Integer)
 
-    def __init__(self, phone_id, gender):
+    def __init__(self, phone_id, gender, username):
         self.phone_id = phone_id
         self.gender = gender
+        self.username = username
 
 
 class Phone(db.Model):

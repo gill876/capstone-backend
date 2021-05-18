@@ -121,7 +121,7 @@ def signup():
         if user is None:
             user = User(username=username)
             user.hash_password(password)
-            profile = Profile(phone_id, gender)
+            profile = Profile(phone_id, gender, username)
 
             # Add User and Profile
             db.session.add(user)
@@ -275,6 +275,10 @@ def log_usage():
     else:
         abort(400)
 
+
+@app.route('/api/recommendation', methods=["GET", "POST"])
+def suggestion():
+    return "recommendation"
 
 @app.route('/api/load/appcat')
 def app_cat():
