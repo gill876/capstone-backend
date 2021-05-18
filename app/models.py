@@ -120,3 +120,13 @@ class AppUsage(db.Model):
             f'{self.category} time_sec: {self.time_sec} ' +\
             f'timestamp: ' +\
             f'{self.timestamp.strftime("%Y-%m-%d %H:%M:%S")}'
+
+class Recommendation(db.Model):
+    """App Usage for user."""
+
+    __tablename__ = "dd_recommendation"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    details = db.Column(db.String(500))
+    date = db.Column(db.DateTime)
+    points = db.Column(db.Integer)

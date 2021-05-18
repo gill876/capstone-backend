@@ -5,57 +5,25 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-from app import app, db, auth
+from app import app, db
 from flask import (
     request, url_for, flash, jsonify, g,
     abort
 )
-from app.models import User, Profile, AppCategory, AppUsage
+from app.models import User, Profile, AppCategory, AppUsage, Recommendation
 import os
 import csv
 import datetime
 import pickle
 import pandas as pd
+import heapq
+import random
 
 # Using JWT
 import jwt
 from flask import _request_ctx_stack
 from functools import wraps
 import base64
-
-
-###
-# Routing for your application.
-###
-# @auth.verify_password
-# def verify_password(username, password):
-#     # first try to authenticate by token
-#     auth = request.headers.get('Authorization', None)
-#     username = request.json.get('username')
-#     password = request.json.get('password')
-
-#     if not auth:
-#       return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
-
-#     parts = auth.split()
-
-#     if parts[0].lower() != 'bearer':
-#       return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
-#     elif len(parts) == 1:
-#       return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
-#     elif len(parts) > 2:
-#       return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
-
-#     token = parts[1]
-
-#     user = User.verify_auth_token(token)
-#     if user is not None:
-#         user = User.query.filter_by(username=username).first()
-#         if user is None:
-#             return False
-#     g.user = user
-#     return True
-
 
 def requires_auth(f):
   @wraps(f)
@@ -286,8 +254,57 @@ def log_usage():
         abort(400)
 
 
-@app.route('/api/recommendation', methods=["GET", "POST"])
-def suggestion():
+@app.route('/api/recommendation/simple', methods=["GET", "POST"])
+@requires_auth
+def simple_suggestion():
+    if request.method == 'GET':
+        username = g.current_user.get("username", None)
+
+        if username is not None:
+            profile = Profile.query.filter_by(username=username).first()
+            traits_lst = [
+                profile.extraversion, # 0
+                profile.agreeableness, # 1
+                profile.conscientiousness, # 2
+                profile.emotional_stability, # 3
+                profile.intellect_imagination # 4
+            ]
+
+            dom_traits = heapq.nlargest(3, traits_lst)
+            recommendation_pool = []
+            fetch_lst = []
+
+            for trait in dom_traits:
+                fetch_lst+= [traits_lst.index(trait)]
+
+            for fetch_r in fetch_lst:
+                title = None
+                if fetch_r == 0:
+                    title = "Extraversion"
+                if fetch_r == 1:
+                    title = "Agreeableness"
+                if fetch_r == 2:
+                    title = "Conscientiousness"
+                if fetch_r == 3:
+                    title = "Emotional Stability"
+                if fetch_r == 4:
+                    title = "Intellect Imagination"
+
+                recommendation_pool+= [
+                    Recommendation.query.filter_by(
+                        title=title
+                    ).all()
+                ]
+            chosen_recommd = recommendation_pool[
+                random.randint(0, len(recommendation_pool) - 1)
+            ]
+
+            return {
+                'data': '{}'.format(
+                    chosen_recommd[0].details
+                )
+            }
+
     return "recommendation"
 
 @app.route('/api/load/appcat')
@@ -314,6 +331,37 @@ def app_cat():
         return {'data': 'Saved to db'}
     else:
         abort(404)
+
+
+@app.route('/api/load/recommd', methods=["GET", "POST"])
+def man_recommd():
+    if request.method == 'POST':
+        recommendations_json = request.get_json()
+
+        recommendations_lst = []
+        for recommendations in recommendations_json:
+            title = recommendations.get("title")
+            details = recommendations.get("details")
+            date = recommendations.get("date", None)
+            points = recommendations.get("points", None)
+
+            if date is None:
+                date = datetime.datetime.now()
+            if points is None:
+                points = 0
+
+            recommd_obj = Recommendation(
+                title=title,
+                details=details,
+                date=date,
+                points=points
+            )
+            recommendations_lst+=[recommd_obj]
+
+        db.session.add_all(recommendations_lst)
+        db.session.commit()
+        return {'data': 'Success'}, 201
+
 
 ###
 # The functions below should be applicable to all Flask apps.
