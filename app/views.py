@@ -63,6 +63,9 @@ def get_resource():
     # return render_template('secure_page.html')
     return jsonify({'data': 'Hello, %s!' % g.current_user})
 
+@app.route('/api/test', methods=["GET", "POST"])
+def test():
+    return {"Test","hello"}
 
 @app.route('/')
 def home():
@@ -332,6 +335,7 @@ def app_cat():
         abort(404)
 
 
+<<<<<<< Updated upstream
 @app.route('/api/load/recommd', methods=["GET", "POST"])
 def man_recommd():
     if request.method == 'POST':
@@ -362,6 +366,8 @@ def man_recommd():
         return {'data': 'Success'}, 201
 
 
+=======
+>>>>>>> Stashed changes
 ###
 # The functions below should be applicable to all Flask apps.
 ###
