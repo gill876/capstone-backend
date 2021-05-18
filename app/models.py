@@ -112,3 +112,9 @@ class AppUsage(db.Model):
     category = db.Column(db.String(500))
     time_sec = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime)
+
+    def __str__(self):
+        return f'username: {self.username} category: ' +\
+            f'{self.category} time_sec: {self.time_sec} ' +\
+            f'timestamp: ' +\
+            f'{self.timestamp.strftime("%Y-%m-%d %H:%M:%S")}'
