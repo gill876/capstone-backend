@@ -14,6 +14,8 @@ from app.models import User, Profile, AppCategory, AppUsage
 import os
 import csv
 import datetime
+import pickle
+import pandas as pd
 
 # Using JWT
 import jwt
@@ -162,15 +164,6 @@ def get_user():
 
     return {"data": "Authentication failed"}, 404
 
-#remember to delete below endoint. Was only for testing
-@app.route("/api/test", methods=["GET", "POST"])
-def test():
-    print("in server")
-    if request.method == "GET":
-        
-        return {"status": "this api works"}
-
-    return {"data": "Authentication failed"}, 404
 
 @app.route('/api/usage', methods=["GET", "POST"])
 @requires_auth
@@ -202,8 +195,85 @@ def log_usage():
             return {'data': 'Accepted'}, 201
         else:
             abort(400)
-    
-    return username
+
+    if request.method == "GET":
+        username = g.current_user.get("username", None)
+
+        conscientiousness = pickle.load(
+            open(
+                '{}{}app{}static{}algorithms{}conscientiousness.pkl'.format(
+                    os.getcwd(), os.sep, os.sep, os.sep, os.sep
+                ), 'rb'
+                )
+            )
+        agreeableness = pickle.load(
+            open(
+                '{}{}app{}static{}algorithms{}agreeableness.pkl'.format(
+                    os.getcwd(), os.sep, os.sep, os.sep, os.sep
+                ), 'rb'
+                )
+            )
+        emotional_stability = pickle.load(
+            open(
+                '{}{}app{}static{}algorithms{}emotional_stability.pkl'.format(
+                    os.getcwd(), os.sep, os.sep, os.sep, os.sep
+                ), 'rb'
+                )
+            )
+        extraversion = pickle.load(
+            open(
+                '{}{}app{}static{}algorithms{}extraversion.pkl'.format(
+                    os.getcwd(), os.sep, os.sep, os.sep, os.sep
+                ), 'rb'
+                )
+            )
+        intellect_imagination = pickle.load(
+            open(
+                '{}{}app{}static{}algorithms{}intellect_imagination.pkl'.format(
+                    os.getcwd(), os.sep, os.sep, os.sep, os.sep
+                ), 'rb'
+                )
+            )
+
+        app_cats = AppCategory.query.all()
+        categories = [c.category for c in app_cats]
+        categories+=['Uncategorized']
+
+        user_complete = {}
+        user_complete.update(dict(zip(categories, (0 for n in range(len(categories))))))
+
+        user_usage_db = AppUsage.query.filter_by(username=username).all()
+        
+        for use_entry in user_usage_db:
+            app_category = use_entry.category
+            category_usage = use_entry.time_sec
+
+            if user_complete[app_category] > 0:
+                user_complete[app_category]+= category_usage
+            else:
+                user_complete[app_category] = category_usage
+
+        user_dataset = [0, 0, 0, 0, 0]
+        user_dataset+= user_complete.values()
+        user_df = pd.DataFrame(user_dataset)
+        user_df = user_df.transpose()
+
+        pred_consc = conscientiousness.predict(user_df)
+        pred_agree = agreeableness.predict(user_df)
+        pred_emotion = emotional_stability.predict(user_df)
+        pred_extra = extraversion.predict(user_df)
+        pred_intellect = intellect_imagination.predict(user_df)
+        return {
+            'data': {
+                'conscientiousness': '{}'.format(pred_consc[0]),
+                'agreeableness': '{}'.format(pred_agree[0]),
+                'emotional_stability': '{}'.format(pred_emotion[0]),
+                'extraversion': '{}'.format(pred_extra[0]),
+                'pred_intellect': '{}'.format(pred_intellect[0])
+                }
+            }
+    else:
+        abort(400)
 
 
 @app.route('/api/load/appcat')
