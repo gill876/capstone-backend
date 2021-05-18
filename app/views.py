@@ -263,13 +263,23 @@ def log_usage():
         pred_emotion = emotional_stability.predict(user_df)
         pred_extra = extraversion.predict(user_df)
         pred_intellect = intellect_imagination.predict(user_df)
+
+        user_profile = Profile.query.filter_by(username=username).first()
+
+        user_profile.conscientiousness = float(pred_consc[0])
+        user_profile.agreeableness = float(pred_agree[0])
+        user_profile.emotional_stability = float(pred_emotion[0])
+        user_profile.extraversion = float(pred_extra[0])
+        user_profile.intellect_imagination = float(pred_intellect[0])
+        db.session.commit()
+
         return {
             'data': {
                 'conscientiousness': '{}'.format(pred_consc[0]),
                 'agreeableness': '{}'.format(pred_agree[0]),
                 'emotional_stability': '{}'.format(pred_emotion[0]),
                 'extraversion': '{}'.format(pred_extra[0]),
-                'pred_intellect': '{}'.format(pred_intellect[0])
+                'intellect_imagination': '{}'.format(pred_intellect[0])
                 }
             }
     else:

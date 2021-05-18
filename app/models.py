@@ -42,11 +42,11 @@ class Profile(db.Model):
     phone_id = db.Column(db.String(255), unique=True)
     username = db.Column(db.String(80))
     gender = db.Column(db.Integer)
-    extraversion = db.Column(db.Integer)
-    agreeableness = db.Column(db.Integer)
-    conscientiousness = db.Column(db.Integer)
-    emotional_stability = db.Column(db.Integer)
-    intellect_imagination = db.Column(db.Integer)
+    extraversion = db.Column(db.Float)
+    agreeableness = db.Column(db.Float)
+    conscientiousness = db.Column(db.Float)
+    emotional_stability = db.Column(db.Float)
+    intellect_imagination = db.Column(db.Float)
 
     def __init__(self, phone_id, gender, username):
         self.phone_id = phone_id
